@@ -87,6 +87,7 @@ def parse_profile(html):
     Parse raw LinkedIn profile HTML to extract:
       - Name
       - Headline
+      - About
       - Work experience roles and companies
       - Skills listed on the profile
     Returns a Python dict of structured data.
@@ -95,6 +96,7 @@ def parse_profile(html):
     data = {
         "name":     soup.select_one("h1").get_text(strip=True) if soup.select_one("h1") else None,
         "headline": soup.select_one(".text-body-medium").get_text(strip=True) if soup.select_one(".text-body-medium") else None,
+        "about":    soup.select_one("section.pv-about-section .pv-about__summary-text").get_text(strip=True) if soup.select_one("section.pv-about-section .pv-about__summary-text") else None,
         "experience": [],
         "skills":   []
     }
@@ -129,7 +131,16 @@ def format_bio(profile_data):
 
     response = client.responses.create(
         model="gpt-4o",
-        instructions="You’re a LinkedIn coach. Turn this JSON into a punchy 3-sentence LinkedIn bio: \n\n",
+        instructions=(
+            "You’re a friendly user‐profile writer. Given this JSON of someone’s LinkedIn data, "
+            "write one casual paragraph (2–3 sentences, ~50 words) that: "
+            "1) names their current role and organization, "
+            "2) highlights a standout project or experience, "
+            "3) calls out their top technical skills, "
+            "and 4) sounds natural and upbeat—just like this example:\n\n"
+            "Ethan Lee is a Bachelor of Commerce student at the University of Melbourne blending his love of AI and voice tech to build real-time conversational agents, including an AI phone-screening system using Next.js, FastAPI, Twilio and 11Labs. He’s led hackathon teams like Urbanteria, fine-tuned image-generation models for property apps and helped SaaS founders with marketing, sharpening his skills in Python, React, Supabase and prompt engineering.\n\n"
+            "Now write a matching paragraph for the JSON below:"
+        ),
         input=json.dumps(profile_data),
     )
 
